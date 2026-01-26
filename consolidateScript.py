@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def consolidate_inventory(file_path):
     # Load Excel file
     xls = pd.ExcelFile(file_path)
@@ -14,11 +13,11 @@ def consolidate_inventory(file_path):
     # Aggregate data
     for _, row in data.iterrows():
         try:
-            unique_id = row[0]  # Col A
-            item = row[1]  # Col B
-            remarks = row[9]  # Col J
-            uom = row[15]  # Col P
-            qty = float(row[12]) if pd.notna(row[12]) else 0  # Col M
+            unique_id = row[0]   # Col A
+            item = row[1]        # Col B
+            remarks = row[9]     # Col J
+            uom = row[15]        # Col P
+            qty = float(row[12]) if pd.notna(row[12]) else 0   # Col M
             price_row = float(row[20]) if pd.notna(row[20]) else 0  # Col U
         except IndexError:
             continue
@@ -59,12 +58,5 @@ def consolidate_inventory(file_path):
         "unique_id", "item", "remarks", "uom", "q_total", "p_total", "unit_price"
     ])
 
-    # Write to "Processed" sheet (overwrite)
-    with pd.ExcelWriter(file_path, mode="a", if_sheet_exists="replace") as writer:
-        result_df.to_excel(writer, sheet_name="Processed", index=False)
-
-    print("Done")
-
-
-if __name__ == "__main__":
-    consolidate_inventory("inventory.xlsx")  # replace with your Excel file path
+    # Return DataFrame for Streamlit display/export
+    return result_df
