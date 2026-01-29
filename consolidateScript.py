@@ -1,23 +1,5 @@
 import pandas as pd
 
-def split_num_unit(s):
-    """Split a string like '10grams' into (10.0, 'grams')."""
-    if pd.isna(s):
-        return 0.0, ""
-    s = str(s).strip()
-    num_part = ""
-    unit_part = ""
-    for ch in s:
-        if ch.isdigit() or ch == ".":   # keep digits and decimals
-            num_part += ch
-        else:
-            unit_part += ch
-    try:
-        num_val = float(num_part) if num_part else 0.0
-    except ValueError:
-        num_val = 0.0
-    return num_val, unit_part
-
 def consolidate_inventory(file_path):
     # Load Excel file
     xls = pd.ExcelFile(file_path)
@@ -33,27 +15,24 @@ def consolidate_inventory(file_path):
         try:
             unique_id = row[0]   # Col A
             item = row[1]        # Col B
-            brand = row[3]       # Col D (new identifier)
+            brand = row[3]       # Col D
             remarks = row[4]     # Col E
             uom = row[9]         # Col J
             qty = float(row[7]) if pd.notna(row[7]) else 0   # Col H
-            price_row = float(row[14]) if pd.notna(row[14]) else 0  # Col O
-            units_raw = row[13]  # Col N (only for split, not grouping)
+            weight_volume = float(row[8]) if pd.notna(row[8]) else 0  # Col I (new identifier)
+            price_row = float(row[14]) if pd.notna(row[14]) else 0    # Col O
         except IndexError:
             continue
 
         if not unique_id or not item:
             continue
 
-        # Normalize remarks/uom/brand to string
+        # Normalize strings
         brand = str(brand) if pd.notna(brand) else ""
         remarks = str(remarks) if pd.notna(remarks) else ""
         uom = str(uom) if pd.notna(uom) else ""
 
-        # Split units into numeric + text (not part of key)
-        unit_value, unit_name = split_num_unit(units_raw)
-
-        # Consolidation key (exclude units_raw)
+        # Consolidation key (exclude weight/volume from key, treat as numeric sum)
         key = f"{unique_id}|{item}|{brand}|{remarks}|{uom}"
 
         if key not in inventory_map:
@@ -63,14 +42,14 @@ def consolidate_inventory(file_path):
                 "brand": brand,
                 "remarks": remarks,
                 "uom": uom,
-                "unit_value": unit_value,
-                "unit_name": unit_name,
                 "q_total": 0,
-                "p_total": 0
+                "p_total": 0,
+                "wv_total": 0   # new aggregated field
             }
 
         inventory_map[key]["q_total"] += qty
         inventory_map[key]["p_total"] += price_row
+        inventory_map[key]["wv_total"] += weight_volume
 
     # Prepare output DataFrame
     output = []
@@ -82,16 +61,15 @@ def consolidate_inventory(file_path):
             entry["brand"],
             entry["remarks"],
             entry["uom"],
-            entry["unit_value"],
-            entry["unit_name"],
+            entry["wv_total"],   # aggregated weight/volume
             entry["q_total"],
             entry["p_total"],
             unit_price
         ])
 
     result_df = pd.DataFrame(output, columns=[
-        "unique_id", "item", "brand", "remarks", "uom",
-        "unit_value", "unit_name", "q_total", "p_total", "unit_price"
+        "unique_id", "item", "brand", "remarks", "unit_price", "qty_total",
+        "wv_total", "uom", "price_total"
     ])
 
     # 🔑 Final fix: force all object columns to string
