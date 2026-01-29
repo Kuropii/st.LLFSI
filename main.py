@@ -2,10 +2,10 @@ import streamlit as st
 import pandas as pd
 import consolidateScript  # your consolidation logic
 
-st.title("Inventory Consolidation Web App")
+st.title("My LLFSI Projects")
 
 # Tabs for features
-tab1, tab2 = st.tabs(["Consolidation", "Placeholder Feature"])
+tab1, tab2 = st.tabs(["Consolidation", "BIR PDF Filler"])
 
 # --- Tab 1: Consolidation workflow ---
 with tab1:
