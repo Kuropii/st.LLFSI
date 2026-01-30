@@ -68,8 +68,8 @@ def consolidate_inventory(file_path):
         ])
 
     result_df = pd.DataFrame(output, columns=[
-        "unique_id", "item", "brand", "remarks", "unit_price", "qty_total",
-        "wv_total", "uom", "price_total"
+        "unique_id", "item", "brand", "remarks", "uom",
+        "weight_volume_total", "q_total", "p_total", "unit_price"
     ])
 
     # 🔑 Final fix: force all object columns to string
